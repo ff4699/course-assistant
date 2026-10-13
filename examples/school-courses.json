@@ -1,0 +1,22 @@
+{
+  "coverage": "unknown",
+  "catalog": [
+    {
+      "id": "example-only:lesson-1",
+      "name": "示例课程（请替换为学校实际数据）",
+      "code": "EXAMPLE101",
+      "class_code": "EXAMPLE101-01",
+      "lesson_id": null,
+      "teachers": ["示例教师"],
+      "credits": 2,
+      "semester": "请填写实际学期",
+      "batch": "请填写实际批次",
+      "entry": "请填写实际入口",
+      "capacity": null,
+      "enrolled_count": null,
+      "schedule_known": true,
+      "meetings": [{"weekday": 2, "start": 7, "end": 8, "weeks": [1, 2, 3, 4, 5, 6, 7, 8]}]
+    }
+  ],
+  "existing": []
+}

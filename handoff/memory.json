@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "updated_on": "2026-10-13",
+  "application_version": "0.3.1",
+  "handoff_version": "handoff-1",
+  "project": "CUPK 选课助手",
+  "language": "zh-CN",
+  "runtime": "Python 3.11+ / FastAPI / SQLite / Playwright / vanilla JS",
+  "school": {
+    "name": "中国石油大学（北京）克拉玛依校区",
+    "student_home": "https://eams.cupk.edu.cn/student/home",
+    "cas_login": "https://cas.cupk.edu.cn/cas/login?service=https://portal.cupk.edu.cn/portal/index_sso.jsp",
+    "timezone": "Asia/Shanghai",
+    "selection_entry": "/student/for-std/course-select",
+    "gate_button": "开始选课"
+  },
+  "current_task": "当前学校只读适配通过；待用户明确目标并验证真实串行提交与核验",
+  "latest_feedback": [
+    {
+      "id": "P0-1",
+      "status": "current_school_scope_verified",
+      "user_report": "已进入学校课程列表，但助手仍提示待进入",
+      "acceptance": "检测到当前正确批次课程后显示已进入，覆盖手动导航与实际学校组件",
+      "baseline_code_evidence": [
+        "public_status只返回缓存",
+        "SELECTION_VIEW只支持主文档普通table/thead/tbody"
+      ],
+      "local_code_status": "school_dom_and_normal_query_verified"
+    },
+    {
+      "id": "P0-2",
+      "status": "current_school_scope_verified",
+      "user_report": "学校课程没有自动显示在选课计划",
+      "acceptance": "复用正常会话采集真实目录并自动落库显示，失败保留旧目录",
+      "baseline_code_evidence": [
+        "连接与登录仅自动导入已有课表",
+        "目录仅由POST /api/browser/catalog人工触发",
+        "目录提取仅主文档当前普通表格"
+      ],
+      "local_code_status": "school_dom_and_normal_query_verified"
+    }
+  ],
+  "requirements": {
+    "max_targets": 5,
+    "submission_concurrency": 1,
+    "retries": {
+      "default": 3,
+      "minimum": 0,
+      "maximum": 10,
+      "meaning": "额外重试，不含首次提交",
+      "maximum_total_attempts": 11
+    },
+    "scarcity_first": true,
+    "identity": "真实教学班、学期、批次、入口及上课时间，不按同名或文字前缀匹配",
+    "confirmation": "选课页面确认 OR 本学期完整课表确认；未知结果不盲目重发",
+    "conflicts": [
+      "预选vs已有",
+      "预选vs预选"
+    ],
+    "timetable_interval_seconds": 60,
+    "viewer_interval_seconds": 4,
+    "catalog_observe_interval_seconds": 3,
+    "catalog_page_sizes": [
+      10,
+      20,
+      50
+    ],
+    "page_number_jump": true,
+    "theme_toggle": "sun_light_moon_dark_persisted",
+    "fluid_workspace": true,
+    "catalog_crawl_limits": {
+      "pages": 100,
+      "records": 5000,
+      "seconds": 180
+    },
+    "catalog_auto_page_size": true,
+    "catalog_page_size_persisted": true,
+    "chosen_courses_layout": "fixed_bottom_summary_with_full_plan_dialog",
+    "execution_controls": "bottom_bar_and_settings_panel",
+    "catalog_full_school_columns": true,
+    "conflict_count_unit": "unique_course_pairs",
+    "conflict_summary_scopes": [
+      "plan",
+      "existing"
+    ],
+    "navigation": [
+      "plan",
+      "schedule",
+      "results"
+    ],
+    "sidebar_width_px": 68,
+    "guide_first_use": true,
+    "signature": "校区25级机械某不知名发烧友",
+    "signature_font_px": 11
+  },
+  "authentication": {
+    "reuse_existing_context": true,
+    "persistent_profile": ".state/browser-profile",
+    "storage_state_implemented": false,
+    "clear_cookies_after_test": false,
+    "password_persisted": false,
+    "captcha": "由用户人工完成正常验证；不绕过/伪造认证",
+    "local_existing_state": "保留用户电脑原.state或CUPK_STATE_DIR，不由交接包覆盖"
+  },
+  "crawl_library": {
+    "installed": false,
+    "integration_status": "removed_at_user_request",
+    "replacement": [
+      "Playwright Python",
+      "HTTPX",
+      "SQLite"
+    ],
+    "crawlee_installed": false
+  },
+  "capabilities": {
+    "demo_execute": true,
+    "live_submit": false,
+    "real_school_dom_verified_in_cloud": false,
+    "native_windows_launch_verified_in_cloud": false,
+    "real_school_dom_verified_locally": true
+  },
+  "data_snapshot": {
+    "cloud_catalog_records": 1,
+    "cloud_catalog_only_placeholder_examples": true,
+    "cloud_existing_courses": 0,
+    "cloud_profile_files": 0,
+    "verified_personal_school_data_in_package": false,
+    "local_school_catalog_records": 14,
+    "local_existing_courses": 13,
+    "local_unknown_schedule_courses": 3,
+    "local_target_count": null,
+    "local_target_count_note": "用户实时修改计划，交接不固定其预选数量；开发保留现有计划"
+  },
+  "historical_validation": {
+    "date": "2026-10-12",
+    "unit_tests_passed": 67,
+    "browser_smoke_passed": true,
+    "scope": "本地虚构学校页面与演练，不是当前真实学校页面"
+  },
+  "excluded": [
+    "原始聊天全文",
+    "账号密码",
+    "Cookie",
+    "令牌",
+    "浏览器Profile",
+    ".state",
+    "SQLite私有库",
+    ".venv",
+    "HAR和私有日志"
+  ],
+  "read_order": [
+    "AGENTS.md",
+    "handoff/START_HERE.md",
+    "handoff/PROJECT_MEMORY.md",
+    "handoff/KNOWN_ISSUES.md",
+    "handoff/LOCAL_RUNBOOK.md",
+    "handoff/CODE_MAP.md"
+  ],
+  "next_prompt": "handoff/NEXT_TASK_PROMPT.txt",
+  "latest_validation": {
+    "date": "2026-10-13",
+    "unit_tests_passed": 106,
+    "browser_smoke_passed": true,
+    "js_errors": 0,
+    "scope": "v0.3.1界面/API回归与学校已保存目录只读核对；106项为此前后端全套验证",
+    "widths": [
+      2560,
+      1920,
+      1280,
+      960,
+      390
+    ],
+    "compact_layout_browser_smoke": true,
+    "offline_browser_archive_launch_verified": true,
+    "school_submission_verified": false,
+    "school_display_columns_verified": 8,
+    "school_display_records_verified": 14,
+    "conflict_pair_count_verified": true,
+    "current_version": "0.3.1",
+    "api_tests_passed": 13
+  },
+  "browser_distribution": {
+    "playwright": "1.63.0",
+    "automatic_install": true,
+    "optional_bundled_windows_chromium": true,
+    "python_dependencies_offline": false
+  }
+}

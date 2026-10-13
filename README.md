@@ -1,2 +1,72 @@
-# cupk-course-assistant
- 中国石油大学（北京）克拉玛依校区课程查询与选课助手
+# CUPK 选课助手 · v0.4.0
+
+面向中国石油大学（北京）克拉玛依校区的本地教务辅助工具。左上角使用学校官网校徽，保留“本地工具”标识。接手开发先读 [handoff/START_HERE.md](handoff/START_HERE.md)。
+
+2026-10-13 已在用户正常登录的同一学校浏览器中核验：课程列表可识别，当前批次目录自动保存到 SQLite；正常清空学校“可选”筛选后，共读取 14 个教学班，页数及学校总数一致。已有课表同步 13 门，其中 3 门时间未知。这里的完整目录指当前批次、当前入口允许该学生查看的范围，不代表全校全部课程。
+
+**真实选课提交仍禁用。目标教学班由用户配置；提交接口与结果反馈尚未实测，演练成功不代表学校选课成功。**
+
+## Windows 安装版（推荐首次使用）
+
+双击 `CUPK-Course-Assistant-Setup-0.4.0-x64.exe`，按中文向导安装。内置 Python、依赖和匹配的 Chromium，无需预装 Python 或谷歌浏览器。首次启动主动同意使用协议后才进入助手；官方版本免费，程序不持久化密码，登录会话与课表/计划保存在本机。安装流程、个人数据路径及卸载清理见 [Windows使用说明](docs/WINDOWS_INSTALL.md)；正式协议见 [用户使用协议与隐私说明](docs/USER_AGREEMENT.md)。
+
+余量按钮打开独立监测面板，可填入最多5个教学班代码或直接使用当前计划。默认5秒为目标查询间隔，一轮未完成时不重叠或堆积；限流时按学校要求退避。基础优先级与少量余位策略生成独立推荐，不改原志愿。支持SSE更新、开始/暂停/停止/手动刷新及过期提示。当前学校范围14教学班的一次人数查询已在正常会话实测；超出正常页面已核实的单批数量时不猜测上限。详见 [查询模块说明](docs/SEAT_MONITOR.md)。
+
+## 启动与浏览器
+
+以下为源码启动方式；安装 EXE 不需要执行这些命令。
+
+需要 Python 3.11+。Windows 完整解压后双击 **start.cmd** 或 **启动助手.bat**，首次自动安装依赖并准备 Chromium，进度和失败原因会显示在命令窗口。无需预装谷歌浏览器。网页地址为 http://127.0.0.1:8765，命令窗口保持打开；Ctrl+C 正常停止。
+
+- `source.zip`：源码包，首次联网安装 Python 依赖和匹配的 Chromium。
+- `windows-offline-browser.zip`：另含 Windows x64 匹配的 Chromium，可免去浏览器下载；Python 和 Python 依赖仍需安装，因此不是完全离线安装包或独立 EXE。
+
+浏览器与 Playwright 固定版本 1.63.0 匹配。随包浏览器优先使用；没有随包版本时自动下载。下载失败时停止启动，重试不会清空 Profile。也可单独运行 **安装学校浏览器.cmd**，或用 `CUPK_CHROMIUM` 指定兼容的正常 Chromium。浏览器版本匹配规则见 [Playwright 官方说明](https://playwright.dev/python/docs/browsers)。
+
+计划、课表和固定登录 Profile 保存在 `.state/`；`CUPK_STATE_DIR` 可指定状态目录。升级时保留原状态，并正常停止旧服务后覆盖源码。已有服务会复用，不要同时运行两个使用同一 Profile 的版本。新电脑须正常登录，账号密码和 Cookie 不随 ZIP 分发。
+
+手动启动：
+
+```powershell
+py -3 -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m playwright install chromium
+.venv\Scripts\python.exe -m assistant --open-browser
+```
+
+Linux/macOS 使用自己的 Playwright 浏览器，不使用 Windows 随包二进制。此项目不是学校官方发布的软件。
+
+## 使用流程
+
+界面保留选课、课表、结果3个入口；计划固定在底部，连接、设置与冲突详情按需打开侧边面板。首次使用显示七步指引，只有获得对应数据或核验结果才打勾：正常登录、同步已有课表、读取课程目录、保存预选计划、检查时间冲突、执行选课、核验并更新课表。点击步骤可进入对应页面；完整课表含时间未知的课程时，冲突步骤会保留警告。
+
+学校浏览器只使用一个正常登录的 BrowserContext 和固定 Profile。人工验证码在正常学校页面完成，不识别或绕过验证码。进入选课入口时可正常点击“开始选课”，只读导入不会点击课程行“选课”。已进入课程列表时直接复用页面，不重复登录或重开上下文。
+
+学校课程自动导入到计划页的**课程目录**，用户勾选目标后才成为预选计划，最多五门。目录保留教务原有8列的完整文字，含课程模块、课程属性、教学班限制及全部时间地点，另加本地预选列；支持课程名、代码、教师、模块与原始信息搜索，自动/10/20/50条分页，以及底部输入页码查询。默认按窗口高度自动调整行数，目录填满可用宽度；窄屏自然滚动。左栏底部太阳为白色背景、月亮为黑色背景，主题和手动页大小保存在本机。
+
+当前正常目录查询通过 Playwright 观察到的只读请求在内存中建立模板，优先使用 HTTPX 分页读取。认证和当前学生/学期/批次来自实际页面，不硬编码身份；模板不写入数据库或导出。最多100页、5000条、180秒。页码、总数、唯一教学班核对后才标记完整；失败保留旧快照。未知人数不会伪装为零。
+
+课表显示周次、星期、全部上课片段和12节具体时刻。学校有效时刻优先，缺失时采用用户提供的 [校历](assistant/static/academic-calendar.jpg)。同步默认每60秒，多个界面共用同步器；失败/部分数据保留上次完整课表。已确认未排课与时间未知分别保留。冲突同时检查预选与已有、预选之间的星期/节次/实际周次交集。统计按课程对显示“组”，分开说明计划之间和与已有课的数量，并列出双方课程及完整重叠周次，不把三组冲突当成三门预选。
+
+## 执行演练与结果
+
+载入示例计划后可演练四门课的串行执行、一次繁忙重试及超时后核验。重试默认3次，范围0–10，表示首次之后的额外尝试。执行过程中显示总耗时；完成后列出成功、未成功或待确认课程及原因，每门课有响应与核验耗时。
+
+总耗时从实际执行开始累计，预约等待和停止后的停留不计入；恢复后累计原耗时。快速完成给出鼓励，耗时较长给出安慰，不承诺抢课速度。学校“已选”或完整本学期课表精确确认教学班才算成功，未知结果不盲目重发。成功后更新课表；更新失败保留选课成功事实，并明确提示课表同步失败。
+
+停止按钮停止新的提交，在途请求继续核验。恢复前重新核验，仅继续仍未完成且有剩余尝试次数的课程；已经成功的课程不重复提交。双击开始只产生一个任务。这些执行功能目前由模拟适配器验证，学校提交功能尚未启用。
+
+课程文件格式见 [examples/school-courses.json](examples/school-courses.json)，包含占位示例而非学校真实学生数据。导出包含课程/计划/执行记录，不包含密码、Profile 或认证模板。
+
+## 开发验证与打包
+
+```powershell
+.venv\Scripts\python.exe -m unittest discover -s tests -v
+.venv\Scripts\python.exe tests/browser_smoke.py
+.venv\Scripts\python.exe tools/package_windows.py
+.venv\Scripts\python.exe tools/package_windows.py --with-browser
+```
+
+验证范围见 [docs/VALIDATION.md](docs/VALIDATION.md)。学校响应字段和剩余事项见 [handoff/KNOWN_ISSUES.md](handoff/KNOWN_ISSUES.md)。ZIP 只收录公开源码、测试、文档与可选浏览器，不包含 `.state`、SQLite 私有库、Profile、HAR、日志或 `.venv`。
+
+使用 Playwright Python、HTTPX、Python 内置 SQLite；已移除 Crawl4AI 运行依赖，没有引入 Crawlee。保留历史开源声明及新增依赖许可证，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
