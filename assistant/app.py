@@ -14,6 +14,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel, Field, SecretStr
 from playwright.async_api import Error as PlaywrightError
 from .browser import BrowserIssue, SchoolSession
+from .connection import ConnectionSettings
 from .demo import DemoAdapter, required_courses
 from .engine import Engine
 from .models import Course, Mode, Plan, analyze_plan
@@ -49,7 +50,7 @@ class SyncSettings(BaseModel):
 
 
 def create_app(state_dir: Path | None = None):
-    state_dir = state_dir or Path(os.environ.get("CUPK_STATE_DIR", DEFAULT_STATE))
+    state_dir = state_dir or Path(os.environ.get("COURSE_STATE_DIR", DEFAULT_STATE))
     if getattr(sys, 'frozen', False):
         from .consent import has_consent
         if not has_consent(state_dir):
@@ -80,14 +81,26 @@ def create_app(state_dir: Path | None = None):
         await app.state.school.close()
         app.state.store.close()
 
-    app = FastAPI(title="CUPK 选课助手", lifespan=lifespan)
+    app = FastAPI(title="课程助手", lifespan=lifespan)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]", "testserver"])
+
+    @app.get('/api/browser/settings')
+    async def connection_settings():
+        return app.state.school.connection.model_dump()
+
+    @app.put('/api/browser/settings')
+    async def update_connection(settings: ConnectionSettings):
+        try:
+            app.state.school.configure(settings)
+        except BrowserIssue as error:
+            raise HTTPException(409, str(error))
+        return app.state.school.connection.model_dump()
 
     @app.middleware("http")
     async def local_only(request, call_next):
         if request.url.path.startswith("/api/") and request.method not in {"GET", "HEAD"}:
             origin = request.headers.get("origin")
-            if request.headers.get("x-cupk-client") != "local" or (origin and urlparse(origin).netloc != request.headers.get("host")):
+            if request.headers.get("x-course-client") != "local" or (origin and urlparse(origin).netloc != request.headers.get("host")):
                 return JSONResponse({"detail": "仅允许本地应用页面发起操作"}, status_code=403)
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
@@ -433,14 +446,14 @@ def create_app(state_dir: Path | None = None):
         # Explicitly omit browser Profile and all authentication material.
         payload = {key: state[key] for key in ("catalog", "existing", "plan", "coverage", "run", "calendar")}
         return Response(json.dumps(payload, ensure_ascii=False, indent=2), media_type="application/json",
-                        headers={"Content-Disposition": f'attachment; filename="cupk-{mode}-plan.json"'})
+                        headers={"Content-Disposition": f'attachment; filename="course-{mode}-plan.json"'})
 
     app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 
     @app.get("/api/health")
     async def health():
-        return {"application": "cupk-course-assistant", "version": "0.4.0",
-                "desktop_instance": os.environ.get('CUPK_DESKTOP_INSTANCE')}
+        return {"application": "course-assistant", "version": "0.4.1",
+                "desktop_instance": os.environ.get('COURSE_DESKTOP_INSTANCE')}
 
     @app.get("/agreement")
     async def agreement():

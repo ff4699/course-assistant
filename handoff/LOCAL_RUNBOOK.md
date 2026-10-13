@@ -1,10 +1,10 @@
 ## v0.4.0 安装EXE与余量监测
 
-普通用户双击dist/CUPK-Course-Assistant-Setup-0.4.0-x64.exe，默认当前用户安装。内置Python和Chromium，首次主动同意1.0协议后进入；数据%LOCALAPPDATA%/CUPKCourseAssistant/data，端口通常8766（占用后尝试9个后续端口），开发版仍8765及原.state，两者不自动搬数据。安装包不含实际账号/数据库/Profile。操作与清理见docs/WINDOWS_INSTALL.md。
+普通用户双击dist/Course-Assistant-Setup-0.4.0-x64.exe，默认当前用户安装。内置Python和Chromium，首次主动同意1.0协议后进入；数据%LOCALAPPDATA%/CourseAssistant/data，端口通常8766（占用后尝试9个后续端口），开发版仍8765及原.state，两者不自动搬数据。安装包不含实际账号/数据库/Profile。操作与清理见docs/WINDOWS_INSTALL.md。
 
 开发构建：建立隔离venv后pip install -r requirements-build.lock，再python tools/build_exe.py --iscc <Inno的ISCC.exe>。绝不从含旧patchright/Crawl4AI插件的环境冻结。载荷/构建日志仅在.state/build-exe；dist有安装EXE、SHA256、公开载荷与发行清单。--skip-freeze只适用于字节码没有改变的文档/静态资源重新打包。
 
-验证：python -m unittest discover -s tests -v；python tests/browser_smoke.py；python tests/seats_browser_smoke.py。真实EXE安装验证用python tools/verify_exe.py dist/CUPK-Course-Assistant-Setup-0.4.0-x64.exe，开发验证需要pywin32/Pillow；在.state/exe-validation独立目录安装与虚构数据，不触碰实际学校Profile。Windows测试服务直接调用基础解释器加venv依赖路径，确保进程退出后数据库句柄释放，不把venv启动器当实际服务进程停止。
+验证：python -m unittest discover -s tests -v；python tests/browser_smoke.py；python tests/seats_browser_smoke.py。真实EXE安装验证用python tools/verify_exe.py dist/Course-Assistant-Setup-0.4.0-x64.exe，开发验证需要pywin32/Pillow；在.state/exe-validation独立目录安装与虚构数据，不触碰实际学校Profile。Windows测试服务直接调用基础解释器加venv依赖路径，确保进程退出后数据库句柄释放，不把venv启动器当实际服务进程停止。
 
 源码当前正常登录上下文在原服务保持。余量默认5秒、最大5个目标，刷新不重新取基础信息；只有显式配置缺失或勾选更新时读取目录。当前正常14条范围的全目录单批已实测。不要为了实测API重复开临时登录上下文，别把模拟成功写成学校选课成功。
 
@@ -34,7 +34,7 @@
 
 1. 安装 Python 3.11+，勾选 Add python.exe to PATH。需要首次下载依赖的网络连接。
 2. 完整解压，根目录应同时看到 `assistant`、`tools`、`handoff`、`start.cmd`、`requirements.txt`。不要在ZIP预览中启动，不要改成.txt。
-3. 有旧服务时先按 Ctrl+C 正常停止。保留原 `.state` 或原 `CUPK_STATE_DIR`；将新代码覆盖到原目录，不清理账号状态。
+3. 有旧服务时先按 Ctrl+C 正常停止。保留原 `.state` 或原 `COURSE_STATE_DIR`；将新代码覆盖到原目录，不清理账号状态。
 4. 双击 `start.cmd` 或 `启动助手.bat`。窗口会显示三阶段进度，失败或退出会停留；日志为状态目录中的 `startup.log`。当前脚本兼容py和python，ASCII内容/CRLF换行，原生Windows尚未在云端执行验证。
 5. 网页未自动打开时，手动访问 `http://127.0.0.1:8765`。窗口需要保持运行。
 6. 连接学校前如缺Chromium，双击 `安装学校浏览器.cmd`。这只安装浏览器组件，不清Profile；下载失败不影响先看模拟界面。
@@ -61,11 +61,11 @@ python -m playwright install chromium
 python -m assistant --open-browser
 ```
 
-桌面端通常显示学校浏览器。无显示环境采用headless；用户验证码需要在正常可交互本地窗口中完成。可通过 `CUPK_CHROMIUM` 指定正常系统Chromium路径，`CUPK_HEADLESS=1` 强制无界面，`CUPK_STATE_DIR` 指定固定状态目录。
+桌面端通常显示学校浏览器。无显示环境采用headless；用户验证码需要在正常可交互本地窗口中完成。可通过 `COURSE_CHROMIUM` 指定正常系统Chromium路径，`COURSE_HEADLESS=1` 强制无界面，`COURSE_STATE_DIR` 指定固定状态目录。
 
 ## 先确认运行的是正确服务
 
-`GET http://127.0.0.1:8765/api/health` 应返回 `application=cupk-course-assistant`、`version=0.2.3`。启动器会复用已有助手服务；源码覆盖后运行中的旧服务不会自动重新加载，因此升级一定先正常停止旧服务。
+`GET http://127.0.0.1:8765/api/health` 应返回 `application=course-assistant`、`version=0.2.3`。启动器会复用已有助手服务；源码覆盖后运行中的旧服务不会自动重新加载，因此升级一定先正常停止旧服务。
 
 不要通过改端口同时打开两个使用同一Profile的浏览器进程。项目未初始化Git仓库，不依赖Git历史；需要Git时可在本地初始化，但`.state`等私有路径保持忽略。
 

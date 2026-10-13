@@ -22,7 +22,7 @@ class LauncherTests(unittest.TestCase):
             profile = root / '.state/browser-profile/local-fixture'
             profile.parent.mkdir(parents=True)
             profile.write_text('kept')
-            with patch.object(launcher, 'ROOT', root), patch.dict(os.environ, {'CUPK_STATE_DIR': str(root / '.state')}), \
+            with patch.object(launcher, 'ROOT', root), patch.dict(os.environ, {'COURSE_STATE_DIR': str(root / '.state')}), \
                     patch.object(launcher, 'running_assistant', return_value=True), \
                     patch.object(launcher, 'prepare_python') as prepare, patch.object(launcher.webbrowser, 'open') as opened, \
                     patch.object(sys, 'argv', ['windows_launcher.py']), patch('builtins.print'):
@@ -36,7 +36,7 @@ class LauncherTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.make_project(root)
-            with patch.object(launcher, 'ROOT', root), patch.dict(os.environ, {'CUPK_STATE_DIR': str(root / '.state'), 'CUPK_CHROMIUM': ''}), \
+            with patch.object(launcher, 'ROOT', root), patch.dict(os.environ, {'COURSE_STATE_DIR': str(root / '.state'), 'COURSE_CHROMIUM': ''}), \
                     patch.object(launcher, 'running_assistant', return_value=False), \
                     patch.object(launcher, 'prepare_python', return_value=Path(sys.executable)), \
                     patch.object(launcher, 'probe', return_value=False), patch.object(launcher.shutil, 'which', return_value=None), \
@@ -51,7 +51,7 @@ class LauncherTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);self.make_project(root)
             profile=root/'.state/browser-profile/fixture';profile.parent.mkdir(parents=True);profile.write_text('kept')
-            with patch.object(launcher,'ROOT',root),patch.dict(os.environ,{'CUPK_STATE_DIR':str(root/'.state'),'CUPK_CHROMIUM':''}),patch.object(launcher,'running_assistant',return_value=False),patch.object(launcher,'prepare_python',return_value=Path(sys.executable)),patch.object(launcher,'probe',return_value=False),patch.object(launcher.shutil,'which',return_value=None),patch.object(launcher,'run',return_value=1) as run,patch.object(sys,'argv',['windows_launcher.py']),patch('builtins.print'):
+            with patch.object(launcher,'ROOT',root),patch.dict(os.environ,{'COURSE_STATE_DIR':str(root/'.state'),'COURSE_CHROMIUM':''}),patch.object(launcher,'running_assistant',return_value=False),patch.object(launcher,'prepare_python',return_value=Path(sys.executable)),patch.object(launcher,'probe',return_value=False),patch.object(launcher.shutil,'which',return_value=None),patch.object(launcher,'run',return_value=1) as run,patch.object(sys,'argv',['windows_launcher.py']),patch('builtins.print'):
                 self.assertEqual(launcher.main(),1)
                 run.assert_called_once()
             self.assertEqual(profile.read_text(),'kept')
@@ -61,7 +61,7 @@ class LauncherTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.make_project(root)
-            with patch.object(launcher, 'ROOT', root), patch.dict(os.environ, {'CUPK_STATE_DIR': str(root / '.state')}), \
+            with patch.object(launcher, 'ROOT', root), patch.dict(os.environ, {'COURSE_STATE_DIR': str(root / '.state')}), \
                     patch.object(launcher, 'running_assistant', return_value=False), \
                     patch.object(launcher, 'prepare_python', return_value=Path(sys.executable)), \
                     patch.object(launcher, 'probe', return_value=True), patch.object(launcher, 'run', return_value=1), \
@@ -73,7 +73,7 @@ class LauncherTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.make_project(root)
-            with patch.object(launcher, 'ROOT', root), patch.dict(os.environ, {'CUPK_STATE_DIR': str(root / '.state')}), \
+            with patch.object(launcher, 'ROOT', root), patch.dict(os.environ, {'COURSE_STATE_DIR': str(root / '.state')}), \
                     patch.object(launcher, 'prepare_python', return_value=Path(sys.executable)), \
                     patch.object(launcher, 'run', return_value=0) as run, \
                     patch.object(sys, 'argv', ['windows_launcher.py', '--install-browser']), patch('builtins.print'):

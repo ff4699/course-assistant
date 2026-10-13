@@ -57,13 +57,9 @@ def build(iscc, skip_freeze=False):
         raise RuntimeError('请在 Windows x64 上构建')
     WORK.mkdir(parents=True, exist_ok=True)
     RELEASE.mkdir(exist_ok=True)
-    icon = ROOT / 'assistant/static/app.ico'
-    if not icon.exists():
-        from PIL import Image
-        Image.open(ROOT / 'assistant/static/university-logo.png').save(icon, sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])
     if not skip_freeze:
         command = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onedir',
-                   '--windowed', '--name', 'CUPKCourseAssistant', '--icon', str(icon),
+                   '--windowed', '--name', 'CourseAssistant', '--icon', 'NONE',
                    '--distpath', str(WORK / 'payload'), '--workpath', str(WORK / 'pyinstaller'),
                    '--specpath', str(WORK), '--paths', str(ROOT),
                    '--collect-all', 'playwright', '--copy-metadata', 'playwright',
@@ -80,7 +76,7 @@ def build(iscc, skip_freeze=False):
             result = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
         if result.returncode:
             raise RuntimeError('PyInstaller 构建失败，详见 .state/build-exe/pyinstaller-build.log')
-    payload = WORK / 'payload/CUPKCourseAssistant'
+    payload = WORK / 'payload/CourseAssistant'
     internal = payload / '_internal'
     shutil.copytree(ROOT / 'assistant/static', internal / 'assistant/static', dirs_exist_ok=True)
     shutil.copy2(ROOT / 'docs/USER_AGREEMENT.md', internal / 'docs/USER_AGREEMENT.md')
@@ -124,10 +120,10 @@ def build(iscc, skip_freeze=False):
         result = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
     if result.returncode:
         raise RuntimeError('安装器构建失败，详见 .state/build-exe/inno-build.log')
-    installer = RELEASE / f'CUPK-Course-Assistant-Setup-{VERSION}-x64.exe'
+    installer = RELEASE / f'Course-Assistant-Setup-{VERSION}-x64.exe'
     info = {'version': VERSION, 'artifact': installer.name, 'bytes': installer.stat().st_size,
             'sha256': digest(installer), 'signed': False, 'with_python': True, 'with_browser': True,
-            'agreement_version': '1.0'}
+            'agreement_version': '1.1'}
     (RELEASE / f'v{VERSION}-exe-release.json').write_text(json.dumps(info, indent=2), encoding='utf-8')
     (RELEASE / f'{installer.name}.sha256').write_text(info['sha256'] + '  ' + installer.name + '\n', encoding='ascii')
     print(json.dumps(info))

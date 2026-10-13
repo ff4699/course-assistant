@@ -1,4 +1,4 @@
-"""Adapted from ShiGuangSchedule/shiguang_warehouse's CUPK adapter (MIT).
+"""Adapted from ShiGuangSchedule/shiguang_warehouse's Course adapter (MIT).
 
 See THIRD_PARTY_NOTICES.md. Preserve lesson identities where supplied, validate
 week arrays, and mark coverage as scheduled-only instead of claiming completeness.

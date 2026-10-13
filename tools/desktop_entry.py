@@ -20,7 +20,7 @@ from assistant.consent import (RESOURCE_ROOT, agreement_text, has_consent,
                               save_consent, disable_password_storage)
 from tools.browser_runtime import bundled_browser
 
-TITLE = 'CUPK 选课助手'
+TITLE = '课程助手'
 
 
 def local_health(url):
@@ -39,7 +39,7 @@ class InstanceLock:
         library.CreateMutexW.restype = ctypes.c_void_p
         library.CloseHandle.argtypes = [ctypes.c_void_p]
         self.library = library
-        self.handle = library.CreateMutexW(None, False, 'Local\\CUPKCourseAssistant-' + identity)
+        self.handle = library.CreateMutexW(None, False, 'Local\\CourseAssistant-' + identity)
         if not self.handle:
             raise OSError('无法创建单实例锁')
         self.duplicate = ctypes.get_last_error() == 183
@@ -61,9 +61,6 @@ def setup_window(root, width, height):
     style.theme_use('clam')
     style.configure('TButton', font=('Microsoft YaHei UI', 10), padding=(12, 6))
     style.configure('TCheckbutton', font=('Microsoft YaHei UI', 10))
-    icon = RESOURCE_ROOT / 'assistant' / 'static' / 'app.ico'
-    if icon.exists():
-        root.iconbitmap(str(icon))
 
 
 def request_consent(root, state_dir):
@@ -71,7 +68,7 @@ def request_consent(root, state_dir):
     root.resizable(False, False)
     frame = ttk.Frame(root, padding=20)
     frame.pack(fill='both', expand=True)
-    ttk.Label(frame, text='欢迎使用 CUPK 选课助手', font=('Microsoft YaHei UI', 16, 'bold')).pack(anchor='w')
+    ttk.Label(frame, text='欢迎使用 课程助手', font=('Microsoft YaHei UI', 16, 'bold')).pack(anchor='w')
     ttk.Label(frame, text='免费本地工具 · 请阅读使用协议与隐私说明', foreground='#606873').pack(anchor='w', pady=(5, 12))
     body = ttk.Frame(frame)
     body.pack(fill='both', expand=True)
@@ -131,13 +128,13 @@ def diagnose(binary, state_dir):
     from playwright.sync_api import sync_playwright
     # No school network or existing login context is used for this explicit diagnostic.
     import tempfile
-    with tempfile.TemporaryDirectory(prefix='cupk-browser-check-', dir=state_dir) as temporary:
+    with tempfile.TemporaryDirectory(prefix='course-browser-check-', dir=state_dir) as temporary:
         with sync_playwright() as p:
             context = p.chromium.launch_persistent_context(temporary, executable_path=binary, headless=True)
             page = context.new_page()
-            page.set_content('<title>CUPK offline browser check</title><p>ok</p>')
+            page.set_content('<title>Course offline browser check</title><p>ok</p>')
             browser_version = context.browser.version
-            assert page.title() == 'CUPK offline browser check'
+            assert page.title() == 'Course offline browser check'
             context.close()
     from importlib.metadata import version
     report = {'ok': True, 'frozen': bool(getattr(sys, 'frozen', False)),
@@ -173,14 +170,14 @@ def main():
     args = parser.parse_args()
     if not 1024 <= args.port <= 65525:
         return 2
-    state_dir = Path(os.environ.get('CUPK_STATE_DIR') or
-                     (Path(os.environ['LOCALAPPDATA']) / 'CUPKCourseAssistant' / 'data')).resolve()
+    state_dir = Path(os.environ.get('COURSE_STATE_DIR') or
+                     (Path(os.environ['LOCALAPPDATA']) / 'CourseAssistant' / 'data')).resolve()
     identity = hashlib.sha256(str(state_dir).casefold().encode()).hexdigest()[:24]
     root = tk.Tk()
     setup_window(root, 760, 620)
     lock = None
     try:
-        default_data = (Path(os.environ['LOCALAPPDATA']) / 'CUPKCourseAssistant/data').resolve()
+        default_data = (Path(os.environ['LOCALAPPDATA']) / 'CourseAssistant/data').resolve()
         lock = InstanceLock('Desktop' if state_dir == default_data else identity)
         if lock.duplicate:
             # Reuse the already-consented EXE instance; never attach to the source service.
@@ -209,9 +206,9 @@ def main():
         if not binary:
             messagebox.showerror(TITLE, '内置浏览器文件缺失或版本不匹配，请重新安装完整程序。', parent=root)
             return 1
-        os.environ['CUPK_STATE_DIR'] = str(state_dir)
-        os.environ['CUPK_CHROMIUM'] = binary
-        os.environ['CUPK_DESKTOP_INSTANCE'] = identity
+        os.environ['COURSE_STATE_DIR'] = str(state_dir)
+        os.environ['COURSE_CHROMIUM'] = binary
+        os.environ['COURSE_DESKTOP_INSTANCE'] = identity
         import uvicorn
         from assistant.app import app
         # External Chromium and Playwright Node must not inherit PyInstaller's DLL search folder.
@@ -243,14 +240,14 @@ def main():
             except BaseException as error:
                 errors.put(type(error).__name__)
 
-        worker = threading.Thread(target=serve, name='cupk-local-service')
+        worker = threading.Thread(target=serve, name='course-local-service')
         worker.start()
         root.resizable(False, False)
         setup_window(root, 410, 230)
         root.title(TITLE + ' — 运行控制')
         panel = ttk.Frame(root, padding=22)
         panel.pack(fill='both', expand=True)
-        ttk.Label(panel, text='CUPK 选课助手', font=('Microsoft YaHei UI', 16, 'bold')).pack(anchor='w')
+        ttk.Label(panel, text='课程助手', font=('Microsoft YaHei UI', 16, 'bold')).pack(anchor='w')
         status = tk.StringVar(value='正在启动本地服务…')
         ttk.Label(panel, textvariable=status, wraplength=360).pack(anchor='w', pady=14)
         row = ttk.Frame(panel)

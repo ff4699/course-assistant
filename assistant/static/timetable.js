@@ -1,5 +1,5 @@
 'use strict';
-window.CupkTimetable = (() => {
+window.CourseTimetable = (() => {
   const el=id=>document.getElementById(id);
   const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const days=['一','二','三','四','五','六','日'];

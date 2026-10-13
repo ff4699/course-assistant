@@ -1,5 +1,5 @@
 #ifndef AppVersion
-  #define AppVersion "0.4.0"
+  #define AppVersion "0.4.1"
 #endif
 #ifndef PayloadDir
   #error PayloadDir must be supplied
@@ -10,12 +10,12 @@
 
 [Setup]
 AppId={{04976567-F1BB-4EA3-8A5A-3365D5E2A784}
-AppName=CUPK 选课助手
+AppName=课程助手
 AppVersion={#AppVersion}
-AppPublisher=CUPK Course Assistant contributors
+AppPublisher=Course Assistant contributors
 AppComments=免费本地开源工具，非学校官方软件
-DefaultDirName={localappdata}\Programs\CUPKCourseAssistant
-DefaultGroupName=CUPK 选课助手
+DefaultDirName={localappdata}\Programs\CourseAssistant
+DefaultGroupName=课程助手
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
@@ -25,17 +25,16 @@ WizardStyle=modern
 Compression=lzma2/fast
 SolidCompression=yes
 OutputDir={#ReleaseDir}
-OutputBaseFilename=CUPK-Course-Assistant-Setup-{#AppVersion}-x64
-SetupIconFile={#PayloadDir}\_internal\assistant\static\app.ico
-UninstallDisplayIcon={app}\CUPKCourseAssistant.exe
-VersionInfoDescription=CUPK 选课助手安装程序
-VersionInfoProductName=CUPK Course Assistant
+OutputBaseFilename=Course-Assistant-Setup-{#AppVersion}-x64
+UninstallDisplayIcon={app}\CourseAssistant.exe
+VersionInfoDescription=课程助手安装程序
+VersionInfoProductName=Course Assistant
 VersionInfoVersion={#AppVersion}
 CloseApplications=no
 RestartApplications=no
-SetupMutex=CUPKCourseAssistantInstaller
-AppMutex=Local\CUPKCourseAssistant-Desktop
-UninstallDisplayName=CUPK 选课助手
+SetupMutex=CourseAssistantInstaller
+AppMutex=Local\CourseAssistant-Desktop
+UninstallDisplayName=课程助手
 
 [Languages]
 Name: "zhcn"; MessagesFile: "compiler:Default.isl"
@@ -47,10 +46,10 @@ DialogFontName=Microsoft YaHei UI
 DialogFontSize=9
 
 [Messages]
-SetupAppTitle=安装 — CUPK 选课助手
-SetupWindowTitle=安装 — CUPK 选课助手
-UninstallAppTitle=卸载 — CUPK 选课助手
-UninstallAppFullTitle=卸载 — CUPK 选课助手
+SetupAppTitle=安装 — 课程助手
+SetupWindowTitle=安装 — 课程助手
+UninstallAppTitle=卸载 — 课程助手
+UninstallAppFullTitle=卸载 — 课程助手
 ButtonBack=< 上一步(&B)
 ButtonNext=下一步(&N) >
 ButtonInstall=安装(&I)
@@ -84,11 +83,11 @@ Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: 
 Source: "{#PayloadDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{userdesktop}\CUPK 选课助手"; Filename: "{app}\CUPKCourseAssistant.exe"; Tasks: desktopicon
-Name: "{group}\CUPK 选课助手"; Filename: "{app}\CUPKCourseAssistant.exe"
+Name: "{userdesktop}\课程助手"; Filename: "{app}\CourseAssistant.exe"; Tasks: desktopicon
+Name: "{group}\课程助手"; Filename: "{app}\CourseAssistant.exe"
 Name: "{group}\使用说明"; Filename: "{app}\安装与使用说明.txt"
-Name: "{group}\卸载 CUPK 选课助手"; Filename: "{uninstallexe}"
+Name: "{group}\卸载 课程助手"; Filename: "{uninstallexe}"
 
 [Run]
-Filename: "{app}\CUPKCourseAssistant.exe"; Description: "启动 CUPK 选课助手"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\CourseAssistant.exe"; Description: "启动 课程助手"; Flags: nowait postinstall skipifsilent
 

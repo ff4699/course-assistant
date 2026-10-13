@@ -27,7 +27,7 @@ def verify(path):
                 assert not relative.is_absolute() and '..' not in relative.parts
                 assert not any(part in {'.state','.venv','.git','browser-profile'} for part in relative.parts)
             archive.extractall(target)
-        project=target/'cupk-course-assistant'
+        project=target/'course-assistant'
         manifest=json.loads((project/'browser/browser-manifest.json').read_text(encoding='utf-8'))
         executable=bundled_browser(project)
         assert executable and hashlib.sha256(Path(executable).read_bytes()).hexdigest()==manifest['executable_sha256']

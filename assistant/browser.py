@@ -20,9 +20,9 @@ from .activity import Activity, now_iso
 from .catalog import CATALOG_VIEW, normalize_catalog, normalize_school_data
 
 
-CAS = "https://cas.cupk.edu.cn/cas/login?service=https://portal.cupk.edu.cn/portal/index_sso.jsp"
-BASE = "https://eams.cupk.edu.cn"
-HOSTS = {"cas.cupk.edu.cn", "portal.cupk.edu.cn", "eams.cupk.edu.cn"}
+CAS = ""
+BASE = ""
+HOSTS = set()
 
 class BrowserIssue(Exception):
     pass
@@ -71,6 +71,9 @@ class SemesterParser(HTMLParser):
 class SchoolSession:
     """One persistent context per local app; normal auth only, read-only school mode."""
     def __init__(self, state_dir: Path):
+        from .connection import load_connection
+        self.state_dir = state_dir
+        self.connection = load_connection(state_dir)
         self.profile = state_dir / "browser-profile"
         self.profile.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.profile.chmod(0o700)
@@ -108,6 +111,33 @@ class SchoolSession:
                 "current_semester": self.current_semester,
                 "profile_saved": any(self.profile.iterdir())}
 
+    @property
+    def base_url(self):
+        return self.connection.base_url or BASE
+
+    @property
+    def login_url(self):
+        return self.connection.login_url or CAS
+
+    @property
+    def allowed_hosts(self):
+        return self.connection.hosts or HOSTS
+
+    @property
+    def count_host(self):
+        return urlparse(self.base_url).hostname
+
+    def configure(self, settings):
+        from .connection import save_connection
+        if self.context is not None and not self.context_closed:
+            raise BrowserIssue('请先正常关闭教务浏览器，再更改连接地址；登录数据会保留')
+        save_connection(self.state_dir, settings)
+        self.connection = settings
+        self.catalog_request_template = self.catalog_snapshot = None
+        self.count_query.template = None
+        self.authenticated = False
+        self._set('not_started', '连接地址已保存，请连接教务系统', selection_ready=False)
+
     def _set(self, state, message, **extra):
         if state != 'connected':
             extra.setdefault('selection_ready', False)
@@ -144,7 +174,7 @@ class SchoolSession:
         request = route.request
         parsed = urlparse(request.url)
         blocked = re.search(r"(?:^|/)(?:add|drop|delete|save|submit|enroll|withdraw|add-request|drop-request|add-drop-request)(?:/|$)|addCourse|dropCourse|select-course|cancel-course", parsed.path, re.I)
-        if parsed.hostname not in HOSTS or request.method in {"PUT", "PATCH", "DELETE"} or blocked:
+        if parsed.hostname not in self.allowed_hosts or request.method in {"PUT", "PATCH", "DELETE"} or blocked:
             await route.abort()
             return
         # Until this school's mutation API is verified, only read-like POSTs are
@@ -167,10 +197,10 @@ class SchoolSession:
         try:
             self.playwright = await async_playwright().start()
             desktop = os.name == "nt" or sys.platform == "darwin" or bool(os.environ.get("DISPLAY"))
-            headless = os.environ.get("CUPK_HEADLESS", "0" if desktop else "1") != "0"
+            headless = os.environ.get("COURSE_HEADLESS", "0" if desktop else "1") != "0"
             options = {"headless": headless, "viewport": {"width": 1440, "height": 1000}}
             from tools.browser_runtime import bundled_browser
-            binary = os.environ.get("CUPK_CHROMIUM") or bundled_browser(Path(__file__).resolve().parents[1]) or shutil.which("chromium") or shutil.which("google-chrome")
+            binary = os.environ.get("COURSE_CHROMIUM") or bundled_browser(Path(__file__).resolve().parents[1]) or shutil.which("chromium") or shutil.which("google-chrome")
             if binary:
                 options["executable_path"] = binary
             if os.name != "nt":
@@ -187,7 +217,7 @@ class SchoolSession:
             self.context.on('response', self._observe_catalog_response)
             self.count_query.attach(self.context)
             pages = self.context.pages
-            self.page = next((p for p in pages if urlparse(p.url).hostname == "eams.cupk.edu.cn"),
+            self.page = next((p for p in pages if urlparse(p.url).hostname == urlparse(self.base_url).hostname),
                              pages[0] if pages else await self.context.new_page())
         except Exception:
             if self.playwright:
@@ -197,9 +227,9 @@ class SchoolSession:
             raise BrowserIssue("浏览器启动失败，请安装 Chromium 或运行 playwright install chromium")
 
     async def _student_authenticated(self):
-        response = await self.context.request.get(BASE + "/student/home", timeout=20000)
+        response = await self.context.request.get(self.base_url + "/student/home", timeout=20000)
         parsed = urlparse(response.url)
-        if response.status in (401, 403) or parsed.path.endswith("/login") or parsed.hostname == "cas.cupk.edu.cn":
+        if response.status in (401, 403) or parsed.path.endswith("/login") or parsed.hostname == urlparse(self.login_url).hostname:
             self.authenticated = False
             self.last_auth_check = time.monotonic()
             return False
@@ -212,8 +242,8 @@ class SchoolSession:
         return self.authenticated
 
     async def _manual_page(self):
-        if urlparse(self.page.url).hostname != "cas.cupk.edu.cn" or not await self.page.locator("#captcha_img").count():
-            await self.page.goto(CAS, wait_until="domcontentloaded", timeout=30000)
+        if urlparse(self.page.url).hostname != urlparse(self.login_url).hostname or not await self.page.locator("#captcha_img").count():
+            await self.page.goto(self.login_url, wait_until="domcontentloaded", timeout=30000)
         if await self.page.locator("#captcha_img").count():
             self._set("manual_required", "需要人工填写验证码；验证后保留登录会话", selection_ready=False)
         else:
@@ -263,10 +293,9 @@ class SchoolSession:
         self.catalog_snapshot = None
         return {'catalog': False, 'empty': False, 'no_batches': no_batches, 'auth_required': auth_required}
 
-    @staticmethod
-    def _selection_url(url):
+    def _selection_url(self, url):
         parsed = urlparse(url)
-        return parsed.hostname in HOSTS and (parsed.path.startswith('/course-selection/') or
+        return parsed.hostname in self.allowed_hosts and (parsed.path.startswith('/course-selection/') or
                                              parsed.path.startswith('/student/for-std/course-select'))
 
     async def refresh_selection(self, force=False):
@@ -396,7 +425,7 @@ class SchoolSession:
         login = self.page.get_by_text("账号登录", exact=True)
         if not selection_page or (await login.count() and await login.first.is_visible()):
             self._set("checking", "正在打开学校选课入口", selection_ready=False, selection_stage="entrance")
-            await self.page.goto(BASE + "/student/for-std/course-select", wait_until="domcontentloaded", timeout=30000)
+            await self.page.goto(self.base_url + "/student/for-std/course-select", wait_until="domcontentloaded", timeout=30000)
         await self._enter_course_list()
 
     def _finish_connection(self):
@@ -411,6 +440,8 @@ class SchoolSession:
         async with self.lock:
             self.activity.begin("连接学校")
             try:
+                if not self.base_url:
+                    raise BrowserIssue('请先在连接设置中填写教务、认证和门户HTTPS地址')
                 self.activity.step("browser", "启动或复用固定登录窗口")
                 await self._ensure()
                 self._set("checking", "正在检查现有登录会话", selection_ready=False)
@@ -421,7 +452,7 @@ class SchoolSession:
                 else:
                     self.activity.step("sso", "通过学校正常单点登录确认会话")
                     # Normal SSO may silently renew from a still-valid CAS session.
-                    await self.page.goto(BASE + "/student/sso/login", wait_until="domcontentloaded", timeout=30000)
+                    await self.page.goto(self.base_url + "/student/sso/login", wait_until="domcontentloaded", timeout=30000)
                     try:
                         await self.page.wait_for_url("**/student/home", timeout=12000)
                     except BrowserTimeout:
@@ -460,16 +491,16 @@ class SchoolSession:
             self.activity.step("auth", "提交你填写的验证码，等待学校认证")
             await self.page.locator("#fm1 input.userButton:visible").first.click()
             try:
-                await self.page.wait_for_url("https://portal.cupk.edu.cn/**", timeout=20000)
+                await self.page.wait_for_url(self.connection.portal_url.rstrip("/") + "/**", timeout=20000)
                 self.activity.step("sso", "认证通过，进入学生教务")
-                await self.page.goto(BASE + "/student/sso/login", wait_until="domcontentloaded", timeout=30000)
+                await self.page.goto(self.base_url + "/student/sso/login", wait_until="domcontentloaded", timeout=30000)
                 await self.page.wait_for_url("**/student/home", timeout=20000)
                 if not await self._student_authenticated():
                     raise BrowserIssue("学生教务登录尚未确认，请检查登录状态")
                 self.activity.step("selection", "进入学校选课应用")
                 await self._open_selection()
             except BrowserTimeout:
-                if urlparse(self.page.url).hostname == "cas.cupk.edu.cn":
+                if urlparse(self.page.url).hostname == urlparse(self.login_url).hostname:
                     await self.page.locator("#password").fill("")
                     self._set("manual_required", "登录未通过或验证码已过期，请核对并重新填写")
                 else:
@@ -500,7 +531,7 @@ class SchoolSession:
             if self.context is None or not await self._student_authenticated():
                 self._set("uncertain", "学生教务会话失效，请先连接，再完成人工验证")
                 raise BrowserIssue("请先完成登录")
-            response = await self.context.request.get(BASE + "/student/for-std/course-table", timeout=20000)
+            response = await self.context.request.get(self.base_url + "/student/for-std/course-table", timeout=20000)
             parser = SemesterParser()
             parser.feed(await response.text())
             if not parser.semesters:
@@ -537,7 +568,7 @@ class SchoolSession:
             self.table_page.on("response", observe)
             confirmed = False
             try:
-                await self.table_page.goto(BASE + "/student/for-std/course-table", wait_until="domcontentloaded", timeout=30000)
+                await self.table_page.goto(self.base_url + "/student/for-std/course-table", wait_until="domcontentloaded", timeout=30000)
                 select = self.table_page.locator("#semesters, #allSemesters").first
                 if await select.count():
                     if await select.input_value() != semester:
@@ -554,7 +585,7 @@ class SchoolSession:
                 for task in tasks:
                     if not task.done(): task.cancel()
             self.activity.step("records", "读取课程时间，并补充全部课程列表")
-            response = await self.context.request.get(BASE + f"/student/for-std/course-table/semester/{semester}/print-data", timeout=20000)
+            response = await self.context.request.get(self.base_url + f"/student/for-std/course-table/semester/{semester}/print-data", timeout=20000)
             if not response.ok:
                 raise BrowserIssue("课表读取失败，未更新本地课表")
             try:
@@ -596,7 +627,7 @@ class SchoolSession:
                 self.activity.step("clock", "合并学校节次时间与校历时刻")
                 metadata = {}
                 try:
-                    info = await self.context.request.get(BASE + f"/student/ws/semester/get/{semester}", timeout=10000)
+                    info = await self.context.request.get(self.base_url + f"/student/ws/semester/get/{semester}", timeout=10000)
                     if info.ok:
                         metadata = await info.json()
                 except Exception:
@@ -733,7 +764,7 @@ class SchoolSession:
         if (template['batch'],template['semester'])!=(snapshot['batch'],snapshot['semester']):
             raise BrowserIssue('已观察的查询与当前批次或学期不一致，请在学校页面正常查询后重试')
         parsed=urlparse(template['url'])
-        if parsed.hostname not in HOSTS or not re.fullmatch(r'/course-selection-api/api/v1/student/course-select/query-lesson/\d+/\d+',parsed.path):
+        if parsed.hostname not in self.allowed_hosts or not re.fullmatch(r'/course-selection-api/api/v1/student/course-select/query-lesson/\d+/\d+',parsed.path):
             raise BrowserIssue('当前查询不是已核实的只读课程查询')
         body=json.loads(template['body'])
         filter_keys = ('courseNameOrCode','lessonNameOrCode','teacherNameOrCode','week','grade',

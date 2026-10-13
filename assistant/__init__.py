@@ -1,1 +1,1 @@
-"""CUPK course assistant: local, single-account, sequential execution."""
+"""Course course assistant: local, single-account, sequential execution."""

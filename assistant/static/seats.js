@@ -58,7 +58,7 @@ async function connectSeats(fill=false){
 }
 $('openSeats').onclick=()=>{openDialog('seatDialog');connectSeats(true).catch(e=>toast(e.message));};
 $('seatDialog').addEventListener('close',()=>{seatSource?.close();seatSource=null;});
-window.addEventListener('cupkmodechange',()=>{if($('seatDialog').open)connectSeats(true).catch(e=>toast(e.message));});
+window.addEventListener('coursemodechange',()=>{if($('seatDialog').open)connectSeats(true).catch(e=>toast(e.message));});
 $('seatUsePlan').onclick=()=>{
   if(!state||!draft)return;
   const selected=draft.course_ids.map(id=>state.catalog.find(c=>c.id===id));

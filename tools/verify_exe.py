@@ -43,7 +43,7 @@ def window_for(process, phrase='用户协议'):
 
 
 def request(url, path, method='GET', data=None):
-    headers = {'X-CUPK-Client': 'local'}
+    headers = {'X-Course-Client': 'local'}
     body = json.dumps(data).encode() if data is not None else None
     if body is not None:
         headers['Content-Type'] = 'application/json'
@@ -110,18 +110,18 @@ def verify(installer):
     state_dir = base / '个人测试数据'
     report = {'installer': installer.name, 'checks': [], 'clean_machine': False}
     subprocess.run([str(installer.resolve()), '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART',
-                    '/DIR=' + str(install_dir), '/GROUP=CUPK EXE 验证', '/TASKS=',
+                    '/DIR=' + str(install_dir), '/GROUP=Course EXE 验证', '/TASKS=',
                     '/LOG=' + str(base / 'install.log')], check=True, timeout=180)
-    executable = install_dir / 'CUPKCourseAssistant.exe'
+    executable = install_dir / 'CourseAssistant.exe'
     assert executable.is_file()
     report['checks'].append('installer_extracts_executable_and_bundled_files')
     with socket.socket() as probe:
         probe.bind(('127.0.0.1', 0))
         port = probe.getsockname()[1]
     url = f'http://127.0.0.1:{port}'
-    env = {**os.environ, 'CUPK_STATE_DIR': str(state_dir), 'PATH': os.path.join(os.environ['WINDIR'], 'System32'),
+    env = {**os.environ, 'COURSE_STATE_DIR': str(state_dir), 'PATH': os.path.join(os.environ['WINDIR'], 'System32'),
            'PLAYWRIGHT_BROWSERS_PATH': str(base / 'empty-browser-cache')}
-    for key in ('PYTHONPATH', 'PYTHONHOME', 'VIRTUAL_ENV', 'CUPK_CHROMIUM', 'CUPK_DESKTOP_INSTANCE'):
+    for key in ('PYTHONPATH', 'PYTHONHOME', 'VIRTUAL_ENV', 'COURSE_CHROMIUM', 'COURSE_DESKTOP_INSTANCE'):
         env.pop(key, None)
     processes = []
     def start(*extra):
@@ -156,10 +156,10 @@ def verify(installer):
         report['agreement_ui_automation']='shared Tk dialog checkbox/button callbacks; frozen gate and refusal verified separately'
         process = start()
         health = wait_for(lambda: healthy(url))
-        assert health['version'] == '0.4.0' and health['desktop_instance']
+        assert health['version'] == '0.4.1' and health['desktop_instance']
         record = json.loads((state_dir / 'consent.json').read_text())
         assert set(record) == {'version', 'document_sha256', 'accepted_at'}
-        assert record['version'] == '1.0'
+        assert record['version'] == '1.1'
         state = request(url, '/api/state')
         assert len(state['catalog']) == 9
         assert not state['session']['browser_running']
@@ -211,11 +211,11 @@ def verify(installer):
         assert (state_dir / 'assistant.sqlite3').is_file()
         report['checks'].append('uninstall_removes_application_and_preserves_personal_data')
         report['ok'] = True
-        (ROOT / 'dist/v0.4.0-exe-validation.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+        (ROOT / 'dist/v0.4.1-exe-validation.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
         print(json.dumps(report))
     except Exception:
         if processes:
-            handle = window_for(processes[-1], 'CUPK')
+            handle = window_for(processes[-1], '课程助手')
             if handle:
                 try:
                     ImageGrab.grab(window=handle).save(base / 'failure-screen.png')
@@ -226,7 +226,7 @@ def verify(installer):
     finally:
         for process in processes:
             if process.poll() is None:
-                handle = window_for(process, 'CUPK')
+                handle = window_for(process, '课程助手')
                 if handle:
                     win32gui.ShowWindow(handle, 9)
                     win32gui.PostMessage(handle, 0x0010, 0, 0)

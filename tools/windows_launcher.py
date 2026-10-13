@@ -28,7 +28,7 @@ def running_assistant(url=URL):
     try:
         # The local service does not require the machine's external proxy.
         with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(url + '/api/health', timeout=1) as response:
-            return json.load(response).get('application') == 'cupk-course-assistant'
+            return json.load(response).get('application') == 'course-assistant'
     except (OSError, ValueError):
         return False
 
@@ -125,14 +125,14 @@ def main():
     if not valid_project(ROOT):
         print('项目文件不完整。请先解压整个 ZIP；启动脚本必须与 assistant 文件夹和 requirements.txt 一起保留。')
         return 1
-    state = Path(os.environ.get('CUPK_STATE_DIR', str(ROOT / '.state'))).resolve()
+    state = Path(os.environ.get('COURSE_STATE_DIR', str(ROOT / '.state'))).resolve()
     try:
         state.mkdir(parents=True, exist_ok=True)
         with (state / 'startup.log').open('w', encoding='utf-8') as log:
-            write('CUPK 启动诊断 ' + datetime.now().isoformat(timespec='seconds'), log)
+            write('Course 启动诊断 ' + datetime.now().isoformat(timespec='seconds'), log)
             write('Python: ' + sys.version.split()[0], log)
             write('日志位置: ' + str(state / 'startup.log'), log)
-            env = {**os.environ, 'PYTHONUTF8': '1', 'PYTHONUNBUFFERED': '1', 'CUPK_STATE_DIR': str(state)}
+            env = {**os.environ, 'PYTHONUTF8': '1', 'PYTHONUNBUFFERED': '1', 'COURSE_STATE_DIR': str(state)}
             try:
                 if not args.install_browser and running_assistant():
                     write('已有助手服务正在运行，复用现有服务。浏览器未打开时，请手动访问 ' + URL, log)
@@ -142,7 +142,7 @@ def main():
                 from tools.browser_runtime import bundled_browser
                 offline=bundled_browser(ROOT,playwright_version='1.63.0')
                 if offline:
-                    env['CUPK_CHROMIUM']=offline
+                    env['COURSE_CHROMIUM']=offline
                     write('已找到随包提供的匹配版本 Chromium，直接使用。',log)
                 if args.install_browser:
                     write('安装学校浏览器组件，下载进度如下。不会清除登录 Profile。', log)
@@ -153,7 +153,7 @@ def main():
                 browser_code = ('from pathlib import Path; from playwright.sync_api import sync_playwright; '
                                 'p=sync_playwright().start(); found=Path(p.chromium.executable_path).is_file(); '
                                 'p.stop(); raise SystemExit(0 if found else 1)')
-                if not offline and not probe(binary, browser_code) and not (os.environ.get('CUPK_CHROMIUM') or shutil.which('chromium') or shutil.which('google-chrome')):
+                if not offline and not probe(binary, browser_code) and not (os.environ.get('COURSE_CHROMIUM') or shutil.which('chromium') or shutil.which('google-chrome')):
                     write('首次启动自动下载 Chromium，下载进度如下；无需安装谷歌浏览器。',log)
                     if run([str(binary),'-m','playwright','install','chromium'],log,env):
                         raise StartupError('浏览器下载未完成。请重试启动或运行「安装学校浏览器.cmd」；Profile和计划保留。')

@@ -11,7 +11,7 @@ import uvicorn
 def existing_app(url):
     try:
         with urllib.request.urlopen(url + '/api/health', timeout=0.7) as response:
-            return json.load(response).get('application') == 'cupk-course-assistant'
+            return json.load(response).get('application') == 'course-assistant'
     except (OSError, ValueError):
         return False
 
@@ -26,7 +26,7 @@ def open_when_ready(url):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="本地 CUPK 选课助手")
+    parser = argparse.ArgumentParser(description="本地 课程助手")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--open-browser", action="store_true", help="启动后自动打开可视化界面")
     args = parser.parse_args()

@@ -1,8 +1,8 @@
 [project]
-name = "cupk-course-assistant"
-version = "0.4.0"
+name = "course-assistant"
+version = "0.4.1"
 license = "MIT"
-description = "Local course planning and session assistant for CUPK"
+description = "Local course planning, timetable and seat monitoring assistant"
 readme = "README.md"
 requires-python = ">=3.11"
 dynamic = ["dependencies"]
@@ -21,7 +21,7 @@ include = ["assistant*", "tools*"]
 assistant = ["static/*"]
 
 [tool.setuptools.data-files]
-"share/cupk-course-assistant" = ["THIRD_PARTY_NOTICES.md"]
-"share/cupk-course-assistant/third_party/crawl4ai" = ["third_party/crawl4ai/LICENSE"]
-"share/cupk-course-assistant/third_party/playwright" = ["third_party/playwright/LICENSE"]
-"share/cupk-course-assistant/third_party/httpx" = ["third_party/httpx/LICENSE.md"]
+"share/course-assistant" = ["THIRD_PARTY_NOTICES.md"]
+"share/course-assistant/third_party/crawl4ai" = ["third_party/crawl4ai/LICENSE"]
+"share/course-assistant/third_party/playwright" = ["third_party/playwright/LICENSE"]
+"share/course-assistant/third_party/httpx" = ["third_party/httpx/LICENSE.md"]

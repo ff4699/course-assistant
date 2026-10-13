@@ -1,3 +1,6 @@
+## v0.4.1连接配置
+assistant/connection.py验证并持久化本机地址；GET/PUT /api/browser/settings读取/保存。BrowserSession按配置域名允许正常浏览及只读查询；默认空配置不会打开网站。环境变量COURSE_、本地请求头X-Course-Client、前端CourseTimetable、course-*存储键。无机构素材或自定义EXE图标。
+
 ## v0.4.0 新增
 
 - assistant/consent.py：正式协议内容/摘要、本机版本与同意时间、合并密码保存/自动填充关闭偏好，不清Cookie。
@@ -24,7 +27,7 @@ models.py新增SchoolDisplay（8列白名单文本）与conflict_summary；冲�
 - catalog_sync.py 自动落库，已完整目录避免重复全量读取。
 - workflow.py 提供证据驱动的7步guide和run_summary；app.py GET /api/state 返回guide/run.summary；POST /api/run/resume 仅支持demo，school返回409。
 - engine.py 累计实际执行耗时、每次response_ms/verification_ms，成功回调、停止继续与任务互斥；真实学校适配器尚未实现。
-- static/index.html/app.js/ui.css 显示学校标识、7步、结果/耗时、恢复按钮；university-logo.png 为官网素材。
+- static/index.html/app.js/ui.css 显示学校标识、7步、结果/耗时、恢复按钮；已移除的旧视觉素材 为官网素材。
 - tools/browser_runtime.py 解析匹配版本的随包浏览器；windows_launcher.py 首次自动安装Chromium；package_windows.py 显式公开目录打包，排除所有私有状态。
 - 测试新增真实脱敏DOM结构、学校JSON字段、HTTPX分页、工作流与耗时/恢复、浏览器部署和失败保存Profile。
 
@@ -120,7 +123,7 @@ models.py新增SchoolDisplay（8列白名单文本）与conflict_summary；冲�
 | POST `/api/run/start?mode=demo` | 模拟执行；school模式409 |
 | POST `/api/run/stop`、`/api/run/verify` | 停止/核验模拟任务 |
 
-非GET写请求需 `X-CUPK-Client: local` 且同Origin；服务只绑定127.0.0.1。调试不能为图方便去掉这些检查。浏览器_guard只限制正常学校域名及未知变更请求，实际新增只读接口要根据正常页面请求验证。
+非GET写请求需 `X-Course-Client: local` 且同Origin；服务只绑定127.0.0.1。调试不能为图方便去掉这些检查。浏览器_guard只限制正常学校域名及未知变更请求，实际新增只读接口要根据正常页面请求验证。
 
 ## 存储键
 

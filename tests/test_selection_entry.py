@@ -33,7 +33,7 @@ class SelectionFixture(FixtureHandler):
             body = COURSE_TABLE if self.server.scenario != 'empty' else '''<table><thead><tr>
             <th>课程名称</th><th>操作</th></tr></thead><tbody><tr><td colspan="2">暂无数据</td></tr></tbody></table>'''
             if self.server.scenario == 'school-shape':
-                body=(Path(__file__).parent/'fixtures/cupk_selection_columns.html').read_text(encoding='utf-8')
+                body=(Path(__file__).parent/'fixtures/selection_columns.html').read_text(encoding='utf-8')
             elif self.server.scenario == 'split':
                 head, tail = COURSE_TABLE.split('</thead>')
                 body = '<div class="el-table">' + head + '</thead></table><table>' + tail + '</div>'

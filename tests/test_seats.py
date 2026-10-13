@@ -17,7 +17,7 @@ from assistant.models import Course, Meeting
 from assistant.seat_monitor import SeatMonitor, SeatSettings
 from assistant.store import Store
 
-HEADERS = {'X-CUPK-Client':'local'}
+HEADERS = {'X-Course-Client':'local'}
 SCOPE = ('fictional-batch', 'fictional-semester')
 
 
@@ -35,6 +35,7 @@ class CountTransportTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.context = SimpleNamespace(cookies=self.cookies, remove_listener=lambda *a:None)
         self.school = SimpleNamespace(context=self.context, context_closed=False, selection_auth_failed=False,
+                                      count_host='eams.example.test',
                                       catalog_snapshot={'batch':SCOPE[0],'semester':SCOPE[1]},
                                       _set=lambda *a,**k:None)
         self.query = ObservedCountClient(self.school)
@@ -43,14 +44,14 @@ class CountTransportTests(unittest.IsolatedAsyncioTestCase):
         self.body = {str(100+i):f'{30+i}-0-0' for i in range(5)}
         self.status = 200
         self.extra_headers = {}
-        request = SimpleNamespace(method='GET',url='https://eams.cupk.edu.cn/fixture/std-count?lessonIds=100,101,102,103,104',
+        request = SimpleNamespace(method='GET',url='https://eams.example.test/fixture/std-count?lessonIds=100,101,102,103,104',
                                   post_data=None,all_headers=self.headers)
         response = SimpleNamespace(request=request,ok=True,json=self.response_json)
         await self.query.capture(response)
         self.assertTrue(self.query.ready(SCOPE))
 
     async def cookies(self, url):
-        return [{'name':'fictional-session','value':'memory-only-test-cookie','domain':'eams.cupk.edu.cn','path':'/'}]
+        return [{'name':'fictional-session','value':'memory-only-test-cookie','domain':'eams.example.test','path':'/'}]
 
     async def headers(self):
         return {'authorization':'memory-only-test-token', 'cookie':'outdated-cookie'}

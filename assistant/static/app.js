@@ -5,14 +5,14 @@ const dayNames = ['一','二','三','四','五','六','日'];
 const names = {plan:['选课计划','选课计划','先同步已有课表，再比较上课时间与选择顺序。'],schedule:['我的课表','我的课表','已有课程与预选课程一起显示，按周次、节次和具体时刻检查冲突。'],monitor:['执行结果','执行结果','每门课程的结果、用时与失败原因。']};
 const statusNames = {pending:'等待执行',submitting:'正在提交',unconfirmed:'结果待确认',succeeded:'已核验成功',full:'人数已满',blocked:'无法选择',exhausted:'重试已用完',cooldown:'等待重试',paused:'尚未完成'};
 const phaseNames = {idle:'尚未执行',waiting:'等待开始',running:'正在演练',stopping:'停止中',stopped:'已停止',finished:'演练结束',interrupted:'执行中断'};
-let mode = localStorage.getItem('cupk-mode') === 'school' ? 'school' : 'demo';
+let mode = localStorage.getItem('course-mode') === 'school' ? 'school' : 'demo';
 let page = 'plan', state = null, draft = null, saveQueue = Promise.resolve(), pendingSaves = 0, toastTimer;
 let pendingOperations=0, polling=false, viewerBusy=false, viewerUrl=null, lastServerContact=Date.now();
 let lastCatalogSignature='';
 let autoSchoolShown=false;
-let guideAutoShown=localStorage.getItem('cupk-guide-seen')==='1',alertDestination='conflictDialog';
+let guideAutoShown=localStorage.getItem('course-guide-seen')==='1',alertDestination='conflictDialog';
 let catalogPage=1, catalogPageSize=10, catalogPageCount=1;
-const preferredPageSize=localStorage.getItem('cupk-page-size');
+const preferredPageSize=localStorage.getItem('course-page-size');
 if(['auto','10','20','50'].includes(preferredPageSize))$('pageSize').value=preferredPageSize;
 if($('pageSize').value!=='auto')catalogPageSize=Number($('pageSize').value);
 function renderTheme(){
@@ -23,7 +23,7 @@ function renderTheme(){
 }
 $('themeToggle').onclick=()=>{
   document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'light':'dark';
-  localStorage.setItem('cupk-theme',document.documentElement.dataset.theme);renderTheme();
+  localStorage.setItem('course-theme',document.documentElement.dataset.theme);renderTheme();
 };
 renderTheme();
 $('aboutButton').onclick=()=>$('aboutDialog').showModal();
@@ -32,14 +32,14 @@ function closeSideDialogs(){document.querySelectorAll('.side-panel[open]').forEa
 function openDialog(id){closeSideDialogs();const dialog=$(id);if(dialog&&!dialog.open)dialog.showModal();}
 document.querySelectorAll('[data-close-dialog]').forEach(button=>button.onclick=()=>$(button.dataset.closeDialog).close());
 document.querySelectorAll('.side-panel').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();}));
-$('openConnection').onclick=()=>openDialog('connectionDialog');
-$('openGuide').onclick=()=>{localStorage.setItem('cupk-guide-seen','1');openDialog('guideDialog');};
+$('openConnection').onclick=async()=>{openDialog('connectionDialog');try{const config=await api('/api/browser/settings');$('connectionBase').value=config.base_url;$('connectionLogin').value=config.login_url;$('connectionPortal').value=config.portal_url;}catch(e){toast(e.message);}};
+$('openGuide').onclick=()=>{localStorage.setItem('course-guide-seen','1');openDialog('guideDialog');};
 $('openPlan').onclick=()=>openDialog('planDialog');
 $('openConflicts').onclick=()=>openDialog('conflictDialog');
 $('alertDetails').onclick=()=>openDialog(alertDestination);
 
 async function api(path, options = {}) {
-  const response = await fetch(path, {...options, headers:{'Content-Type':'application/json','X-CUPK-Client':'local',...(options.headers || {})}});
+  const response = await fetch(path, {...options, headers:{'Content-Type':'application/json','X-Course-Client':'local',...(options.headers || {})}});
   let result;
   try { result = await response.json(); } catch { throw new Error('服务暂时不可用，请检查本地程序是否运行'); }
   if (!response.ok) throw new Error(result.detail || '操作没有完成');
@@ -62,7 +62,7 @@ function weeksText(weeks) {
 function timeText(course) {
   if (!course.schedule_known) return '上课时间待核实';
   if (!course.meetings.length) return '无固定排课';
-  return course.meetings.map(slot=>`周${dayNames[slot.weekday-1]} · ${window.CupkTimetable.range(slot,state.calendar)} · ${weeksText(slot.weeks)}`).join('；');
+  return course.meetings.map(slot=>`周${dayNames[slot.weekday-1]} · ${window.CourseTimetable.range(slot,state.calendar)} · ${weeksText(slot.weeks)}`).join('；');
 }
 async function loadState() {
   const requested=mode;
@@ -79,7 +79,7 @@ async function loadState() {
   if (!pendingSaves) draft=structuredClone(result.plan);
   render();
   if(!guideAutoShown&&!active()){
-    guideAutoShown=true;localStorage.setItem('cupk-guide-seen','1');openDialog('guideDialog');
+    guideAutoShown=true;localStorage.setItem('course-guide-seen','1');openDialog('guideDialog');
   }
 }
 function savePlan() {
@@ -223,7 +223,7 @@ function renderChosen() {
   $('planIssues').innerHTML=(pairs.pairs?`<div class="conflict-explanation">已保存 ${draft.course_ids.length} 门计划；计划之间 ${pairs.plan_pairs} 组、与已有课 ${pairs.existing_pairs} 组。数字按课程对计数。</div>`:'')+state.analysis.issues.map(issue=>{
     const course=anyCourse(issue.course_id),other=anyCourse(issue.other_id);
     const title=issue.kind==='conflict'?`[${issue.scope==='existing'?'计划与已有课':'计划之间'}] ${course?.name||issue.course_id}（${course?.class_code||'班级待核实'}） ↔ ${other?.name||issue.other_id}（${other?.class_code||'班级待核实'}）`:`${course?.name||'课表'}：${issue.message}`;
-    return `<div class="issue ${['full','coverage','freshness'].includes(issue.kind)?'warning':''}"><strong>${esc(title)}</strong>${issue.overlap?'<br>'+issue.overlap.map(slot=>esc(`周${dayNames[slot.weekday-1]} ${window.CupkTimetable.range(slot,state.calendar)} · ${weeksText(slot.weeks)}`)).join('<br>'):''}</div>`;
+    return `<div class="issue ${['full','coverage','freshness'].includes(issue.kind)?'warning':''}"><strong>${esc(title)}</strong>${issue.overlap?'<br>'+issue.overlap.map(slot=>esc(`周${dayNames[slot.weekday-1]} ${window.CourseTimetable.range(slot,state.calendar)} · ${weeksText(slot.weeks)}`)).join('<br>'):''}</div>`;
   }).join('');
   $('strategyLabel').textContent=draft.scarcity_first?'优先照顾名额较少的课程':'严格按个人优先级执行';
   $('retryLabel').textContent=`失败重试 ${draft.retries} 次 · 最多提交 ${draft.retries+1} 次`;
@@ -256,7 +256,7 @@ function renderSchedule(){
   $('autoSync').disabled=mode==='demo'||!state.sync.config.semester;
   $('autoSync').checked=mode==='school'&&state.sync.config.enabled;
   $('autoSync').title=mode==='demo'?'演练数据不访问学校':!state.sync.config.semester?'先成功导入学校当前学期课表':'每 60 秒读取一次学校课表';
-  window.CupkTimetable.render(state,draft);
+  window.CourseTimetable.render(state,draft);
 }
 function renderConnection(){
   const labels={not_started:'尚未连接',checking:'检查登录状态',manual_required:'等待人工验证',connected:'学生教务已连接',uncertain:'需要检查连接'};
@@ -317,13 +317,13 @@ async function refreshView(){
 }
 async function switchMode(next){
   if(active()){toast('请先停止当前演练，再切换环境');$('mode').value=mode;return;}
-  await saveQueue.catch(()=>{}); mode=next;catalogPage=1;localStorage.setItem('cupk-mode',mode); await loadState();window.dispatchEvent(new Event('cupkmodechange'));
+  await saveQueue.catch(()=>{}); mode=next;catalogPage=1;localStorage.setItem('course-mode',mode); await loadState();window.dispatchEvent(new Event('coursemodechange'));
 }
 document.querySelectorAll('.nav-item').forEach(button=>button.onclick=()=>navigate(button.dataset.page));
 $('search').oninput=()=>{catalogPage=1;if(state)renderCatalog();}; $('filter').onchange=()=>{catalogPage=1;if(state)renderCatalog();};
 $('catalogPrev').onclick=()=>{catalogPage--;renderCatalog();};
 $('catalogNext').onclick=()=>{catalogPage++;renderCatalog();};
-$('pageSize').onchange=()=>{localStorage.setItem('cupk-page-size',$('pageSize').value);if($('pageSize').value!=='auto')catalogPageSize=Number($('pageSize').value);catalogPage=1;renderCatalog();};
+$('pageSize').onchange=()=>{localStorage.setItem('course-page-size',$('pageSize').value);if($('pageSize').value!=='auto')catalogPageSize=Number($('pageSize').value);catalogPage=1;renderCatalog();};
 $('pageJumpForm').onsubmit=event=>{event.preventDefault();const target=Number($('pageJump').value);if(!Number.isInteger(target)||target<1||target>catalogPageCount){toast(`页码范围为 1–${catalogPageCount}`);return;}catalogPage=target;renderCatalog();};
 $('readAllCatalog').onclick=()=>busy($('readAllCatalog'),async()=>{const r=await api('/api/browser/catalog/all',{method:'POST'});await loadState();toast(r.catalog_sync.message);});
 $('openMonitor').onclick=()=>navigate('monitor');
@@ -362,3 +362,5 @@ new ResizeObserver(()=>{
   requestAnimationFrame(()=>{catalogResizeQueued=false;if(state&&page==='plan')renderCatalog();});
 }).observe(document.querySelector('.catalog-panel .table-scroll'));
 loadState().catch(error=>{toast(error.message);showServiceError();});
+
+$('connectionSettingsForm').onsubmit=async event=>{event.preventDefault();try{await api('/api/browser/settings',{method:'PUT',body:JSON.stringify({base_url:$('connectionBase').value.trim(),login_url:$('connectionLogin').value.trim(),portal_url:$('connectionPortal').value.trim()})});toast('连接地址已保存在本机');}catch(e){toast(e.message);}};

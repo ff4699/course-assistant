@@ -1,4 +1,4 @@
-"""2026–2027 CUPK calendar supplied by the user; server metadata takes priority."""
+"""2026–2027 Course calendar supplied by the user; server metadata takes priority."""
 from copy import deepcopy
 from datetime import date
 import re

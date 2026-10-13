@@ -19,7 +19,7 @@ def main():
     with tempfile.TemporaryDirectory() as temp:
         with socket.socket() as sock:
             sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
-        env={**os.environ,'CUPK_STATE_DIR':temp}
+        env={**os.environ,'COURSE_STATE_DIR':temp}
         binary=sys.executable
         if os.name=='nt' and sys.prefix!=sys.base_prefix:
             binary=sys._base_executable

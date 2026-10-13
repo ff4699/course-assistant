@@ -18,6 +18,6 @@ while pending:
         if requirement.marker is None or requirement.marker.evaluate({'extra': ''}):
             pending.append(requirement.name)
 (ROOT / 'requirements-build.lock').write_text(
-    '# Windows x64 release build, Python 3.14. Exact versions used for v0.4.0.\n'
+    '# Windows x64 release build, Python 3.14. Exact versions used for v0.4.1.\n'
     + ''.join(f'{name}=={packages[name]}\n' for name in sorted(packages)), encoding='utf-8')
 print(f'Locked {len(packages)} runtime/build dependencies')

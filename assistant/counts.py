@@ -75,7 +75,7 @@ class ObservedCountClient:
 
     def observe(self, response):
         parsed = urlparse(response.url)
-        if parsed.hostname != 'eams.cupk.edu.cn' or not re.search(r'(?:^|/)std-count(?:/|$)', parsed.path):
+        if parsed.hostname != self.school.count_host or not re.search(r'(?:^|/)std-count(?:/|$)', parsed.path):
             return
         task = asyncio.create_task(self.capture(response))
         self.tasks.add(task)
@@ -141,7 +141,7 @@ class ObservedCountClient:
                 raise CountQueryError('批量查询仍在间隔或学校限流等待期', 'cooldown', self.next_allowed - time.monotonic())
             template = self.template
             parsed = urlparse(template['url'])
-            if parsed.hostname != 'eams.cupk.edu.cn' or parsed.scheme != 'https' or not re.search(r'(?:^|/)std-count(?:/|$)', parsed.path):
+            if parsed.hostname != self.school.count_host or parsed.scheme != 'https' or not re.search(r'(?:^|/)std-count(?:/|$)', parsed.path):
                 raise CountQueryError('未核实的查询地址，已停止', 'waiting_api')
             headers = {k:v for k,v in template['headers'].items() if k.lower() not in
                        {'host', 'content-length', 'connection', 'accept-encoding', 'cookie'}}

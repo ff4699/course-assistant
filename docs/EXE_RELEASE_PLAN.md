@@ -1,10 +1,10 @@
 # Windows EXE 打包与首次使用流程
 
-日期：2026-10-13。用户已批准协议，本方案在v0.4.0实施；实际交付与验证见WINDOWS_INSTALL.md、SEAT_MONITOR.md及dist的发行/验证清单。下面的步骤保留原先审核顺序，其中原“待确认”事项已由正式协议和根MIT LICENSE落实。
+日期：2026-10-13。用户已批准协议，本方案在v0.4.1实施；实际交付与验证见WINDOWS_INSTALL.md、SEAT_MONITOR.md及dist的发行/验证清单。下面的步骤保留原先审核顺序，其中原“待确认”事项已由正式协议和根MIT LICENSE落实。
 
 ## 交付形式
 
-推荐交付一个安装文件 `CUPK-Course-Assistant-Setup-<version>-x64.exe`，安装后提供桌面快捷方式和应用 EXE。先面向 Windows 10/11 x64 验证，不将未经验证的其他系统列为支持范围。
+推荐交付一个安装文件 `Course-Assistant-Setup-<version>-x64.exe`，安装后提供桌面快捷方式和应用 EXE。先面向 Windows 10/11 x64 验证，不将未经验证的其他系统列为支持范围。
 
 采用 PyInstaller 文件夹模式收集程序、Python 运行环境和依赖，再由 Inno Setup 制作安装 EXE。匹配 Playwright 的完整 Chromium 浏览器目录随安装包一起提供，无需用户自行安装 Python 或谷歌浏览器。Chromium 为开源浏览器，不宣称是 Google Chrome。当前本地网页界面保留，启动时使用内置浏览器显示。
 

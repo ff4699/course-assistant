@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 
-AGREEMENT_VERSION = '1.0'
+AGREEMENT_VERSION = '1.1'
 RESOURCE_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -48,6 +48,6 @@ def disable_password_storage(profile):
     settings['credentials_enable_autosignin'] = False
     settings.setdefault('profile', {})['password_manager_enabled'] = False
     settings.setdefault('autofill', {}).update(profile_enabled=False, credit_card_enabled=False)
-    temporary = path.with_suffix('.cupk.tmp')
+    temporary = path.with_suffix('.course.tmp')
     temporary.write_text(json.dumps(settings), encoding='utf-8')
     temporary.replace(path)

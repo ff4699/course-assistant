@@ -84,7 +84,7 @@ class CatalogSyncTests(unittest.TestCase):
         with patch.object(self.school, 'connect', connected), \
              patch.object(self.school, 'refresh_selection', AsyncMock(return_value=self.snapshot())), \
              patch.object(self.school, 'semesters', AsyncMock(return_value=[])):
-            response = self.client.post('/api/browser/connect', headers={'X-CUPK-Client': 'local'})
+            response = self.client.post('/api/browser/connect', headers={'X-Course-Client': 'local'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['catalog_sync']['state'], 'success')
         self.assertEqual(len(self.store.get('school:catalog')), 1)

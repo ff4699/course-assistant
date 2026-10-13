@@ -3,13 +3,13 @@
   "updated_on": "2026-10-13",
   "application_version": "0.3.1",
   "handoff_version": "handoff-1",
-  "project": "CUPK 选课助手",
+  "project": "课程助手",
   "language": "zh-CN",
   "runtime": "Python 3.11+ / FastAPI / SQLite / Playwright / vanilla JS",
   "school": {
-    "name": "中国石油大学（北京）克拉玛依校区",
-    "student_home": "https://eams.cupk.edu.cn/student/home",
-    "cas_login": "https://cas.cupk.edu.cn/cas/login?service=https://portal.cupk.edu.cn/portal/index_sso.jsp",
+    "name": "目标教务系统目标教务系统",
+    "student_home": "https://eams.example.test/student/home",
+    "cas_login": "https://cas.example.test/cas/login?service=https://portal.example.test/portal/index_sso.jsp",
     "timezone": "Asia/Shanghai",
     "selection_entry": "/student/for-std/course-select",
     "gate_button": "开始选课"
@@ -100,7 +100,7 @@
     "clear_cookies_after_test": false,
     "password_persisted": false,
     "captcha": "由用户人工完成正常验证；不绕过/伪造认证",
-    "local_existing_state": "保留用户电脑原.state或CUPK_STATE_DIR，不由交接包覆盖"
+    "local_existing_state": "保留用户电脑原.state或COURSE_STATE_DIR，不由交接包覆盖"
   },
   "crawl_library": {
     "installed": false,

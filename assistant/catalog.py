@@ -138,7 +138,7 @@ def display_from_row(table,row):
 
 
 def normalize_school_data(data, view, identity):
-    """CUPK AllLesson fields observed in the normal logged-in selection page."""
+    """Course AllLesson fields observed in the normal logged-in selection page."""
     batch, semester = str(data['batch']), str(data['semester'])
     result = []
     for lesson in data['lessons']:

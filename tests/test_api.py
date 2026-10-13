@@ -7,7 +7,7 @@ from playwright.async_api import Error as PlaywrightError
 from assistant.app import create_app
 
 
-HEADERS = {'X-CUPK-Client': 'local'}
+HEADERS = {'X-Course-Client': 'local'}
 
 
 class ApiTests(unittest.TestCase):

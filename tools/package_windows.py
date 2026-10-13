@@ -11,7 +11,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 VERSION=tomllib.loads((ROOT/'pyproject.toml').read_text(encoding='utf-8'))['project']['version']
 PUBLIC_DIRS={'assistant','tools','tests','handoff','examples','third_party','docs'}
-PUBLIC_FILES={'AGENTS.md','README.md','requirements.txt','requirements-build.lock','pyproject.toml','LICENSE','THIRD_PARTY_NOTICES.md',
+PUBLIC_FILES={'.gitignore','AGENTS.md','README.md','requirements.txt','requirements-build.lock','pyproject.toml','LICENSE','THIRD_PARTY_NOTICES.md',
               'start.cmd','启动助手.bat','安装学校浏览器.cmd'}
 
 
@@ -27,8 +27,8 @@ def source_files():
 def build(with_browser=False):
     output=ROOT/'dist';output.mkdir(exist_ok=True)
     suffix='windows-offline-browser' if with_browser else 'source'
-    target=output/f'cupk-course-assistant-v{VERSION}-{suffix}.zip'
-    base='cupk-course-assistant/'
+    target=output/f'course-assistant-v{VERSION}-{suffix}.zip'
+    base='course-assistant/'
     with zipfile.ZipFile(target,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=5) as archive:
         for path,name in source_files():archive.write(path,base+name)
         if with_browser:

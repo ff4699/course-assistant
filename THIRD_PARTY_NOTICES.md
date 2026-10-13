@@ -3,7 +3,7 @@
 ## Project license and Windows executable (v0.4.0)
 
 The project's own code is released under the root MIT LICENSE. Existing
-third-party notices remain applicable; school artwork is not relicensed.
+third-party notices remain applicable. No institution artwork is distributed.
 The free official release uses PyInstaller to bundle Python and dependencies,
 and Inno Setup to create the installer. Their licenses and bundled dependency
 license files are included under `_internal/licenses`; Chromium's own ABOUT
@@ -16,13 +16,13 @@ of bundled applications. Build-only packages do not become application services.
 
 ## ShiGuangSchedule/shiguang_warehouse
 
-Source: https://github.com/ShiGuangSchedule/shiguang_warehouse/blob/main/resources/CUPK/cupk_01.js
+Source: https://github.com/ShiGuangSchedule/shiguang_warehouse
 
 Source file blob SHA inspected: `6360f3e3a98c66d21d046f9e9c0d669b02691103`.
 
-`assistant/schedule.py` adapts its CUPK course-table route, semester selector,
+`assistant/schedule.py` adapts its EAMS course-table route, semester selector,
 activity fields and timetable-unit mapping into Python. The adapter credits
-larryyan's original CUP adaptation. Our version adds shape validation, preserves
+larryyan's original timetable adaptation. Our version adds shape validation, preserves
 lesson IDs when provided and labels the result as scheduled-only.
 
 v0.2 additionally implements its own conservative full-list merge and schedule
@@ -62,7 +62,7 @@ Source file blob SHA inspected: `0c90a6f277a57b273377a2d21e705ae42d98ce9a`.
 
 Reference for separating a cached lesson catalog, batched count queries,
 submission and subsequent confirmation. This application does not call USTC's
-submission endpoints or assume they apply to CUPK. Its scheduler is independently
+submission endpoints or assume they apply to a configured installation. Its scheduler is independently
 implemented, bounded, sequential and checks exact target identities.
 
 MIT License
@@ -92,10 +92,6 @@ SOFTWARE.
 - HTTPX 0.28.1: https://github.com/encode/httpx, BSD-3-Clause; full license preserved in third_party/httpx/LICENSE.md.
 - SQLite via Python sqlite3: https://www.sqlite.org/copyright.html (public domain dedication).
 - Optional offline browser: unmodified matching Playwright Chromium release. The release's own ABOUT and other license files are included with its complete browser directory; Chromium is not branded Google Chrome. No user Profile accompanies it.
-
-## School visual identity
-
-Official red emblem (unmodified 04 (2).png) from the campus standard logo package https://www.cupk.edu.cn/dwxcb/upload/resources/file/2025/11/25/109063.zip, linked from https://www.cupk.edu.cn/dwxcb/c/2025-11-03/530920.shtml (accessed 2026-10-13). Used locally to identify the intended school; preserve the original shape and red artwork. School identity/artwork belongs to its rights holder and is not relicensed by this project. The UI labels this application as a local tool; this is not an official school release.
 
 ## Historical Crawl4AI attribution (inactive)
 

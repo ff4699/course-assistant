@@ -26,7 +26,7 @@ def main():
         with socket.socket() as port_socket:
             port_socket.bind(('127.0.0.1', 0))
             port = port_socket.getsockname()[1]
-        env = {**os.environ, 'CUPK_STATE_DIR': str(Path(temp) / 'state')}
+        env = {**os.environ, 'COURSE_STATE_DIR': str(Path(temp) / 'state')}
         binary = sys.executable
         if os.name == 'nt' and sys.prefix != sys.base_prefix:
             binary = sys._base_executable
@@ -45,7 +45,7 @@ def main():
                 raise RuntimeError('Isolated app did not start')
             errors = []
             options = {'headless': True}
-            binary = os.environ.get('CUPK_CHROMIUM') or shutil.which('chromium') or shutil.which('google-chrome')
+            binary = os.environ.get('COURSE_CHROMIUM') or shutil.which('chromium') or shutil.which('google-chrome')
             if binary: options['executable_path'] = binary
             if os.name != 'nt': options['args'] = ['--no-sandbox']
             with sync_playwright() as p:
@@ -60,8 +60,8 @@ def main():
                 page.locator('#pageSize').select_option('20')
                 expect(page.locator('#courseRows tr')).to_have_count(9)
                 expect(page.locator('#setupGuide li')).to_have_count(7)
-                expect(page.locator('.school-brand')).to_contain_text('中国石油大学')
-                assert page.request.get(url+'static/university-logo.png').status==200
+                expect(page.locator('.brand')).to_have_attribute('aria-label','课程助手')
+                assert page.request.get(url+'static/university-logo.png').status==404
                 page.locator('#aboutButton').click()
                 expect(page.locator('#aboutDialog')).to_be_visible()
                 expect(page.locator('#aboutDialog')).to_contain_text('Playwright')
@@ -177,7 +177,7 @@ def main():
                 # Stop and continue stay available on the results page.
                 saved_plan=page.request.get(url+'api/state?mode=demo').json()['plan']
                 queued_plan={**saved_plan,'start_at':(datetime.now(timezone.utc)+timedelta(minutes=2)).isoformat()}
-                response=page.request.put(url+'api/plan?mode=demo',data=queued_plan,headers={'X-CUPK-Client':'local'})
+                response=page.request.put(url+'api/plan?mode=demo',data=queued_plan,headers={'X-Course-Client':'local'})
                 assert response.ok,response.text()
                 page.reload(wait_until='networkidle')
                 page.locator('#startRun').click()
@@ -188,7 +188,7 @@ def main():
                 expect(page.locator('#resumeRun')).to_be_visible()
                 page.locator('#resumeRun').click()
                 expect(page.locator('#runTargets .tag.succeeded')).to_have_count(4,timeout=15000)
-                response=page.request.put(url+'api/plan?mode=demo',data=saved_plan,headers={'X-CUPK-Client':'local'})
+                response=page.request.put(url+'api/plan?mode=demo',data=saved_plan,headers={'X-Course-Client':'local'})
                 assert response.ok
                 page.locator('#page-logs > summary').click()
                 page.locator('#resetDemo').click()
@@ -280,7 +280,7 @@ def main():
                 page.locator('#openConnection').click()
                 expect(page.locator('#sessionTitle')).to_have_text('课程列表已打开')
                 ready['run']['phase']='running'
-                page.evaluate("localStorage.setItem('cupk-mode','demo')")
+                page.evaluate("localStorage.setItem('course-mode','demo')")
                 page.reload(wait_until='networkidle')
                 expect(page.locator('#mode')).to_have_value('demo')
                 expect(page.locator('#mode')).to_be_disabled()
